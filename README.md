@@ -1,2 +1,2 @@
 # IAE Cohort
-This repository contains scripts used for performing variuos analysis related to the IAE Cohort Study.
+This repository contains data and scripts used for performing variuos analysis related to the IAE Cohort Study.
