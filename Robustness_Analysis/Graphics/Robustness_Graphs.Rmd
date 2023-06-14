@@ -1,0 +1,345 @@
+---
+title: "IAE"
+subtitle: "Robustness: Graphs"
+date: "Última modificación `r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+<div style="text-align: justify">
+
+\newpage
+
+# Read files
+
+```{r}
+library(readr)
+metadata <- read_delim("/storage/projects/IAE/Analisis/Figuras/SFig3-AlphaDiversity/selected_timepoint_metadata.tsv", 
+    delim = "\t", escape_double = FALSE, 
+    trim_ws = TRUE)
+```
+
+```{r}
+library(readr)
+TableRobustnessFactors_R20220220 <- read_delim("/storage/projects/IAE/Redaccion/TareasIAE/PP8/Recibido/TableRobustnessFactors_R20220220.tsv", 
+    delim = "\t", escape_double = FALSE, 
+    trim_ws = TRUE)
+```
+
+```{r}
+Robustness_meta <- merge(TableRobustnessFactors_R20220220, metadata, by.x='Sample', by.y='Sample_Name')
+```
+
+```{r}
+library(readr)
+TableSpecifRobustnessFactors_bySuperpathway <- read_delim("/storage/projects/IAE/Redaccion/TareasIAE/PP8/Recibido/TableSpecifRobustnessFactors_bySuperpathway.tsv", 
+    delim = "\t", escape_double = FALSE, 
+    trim_ws = TRUE)
+```
+
+```{r}
+Superpaths_meta <- merge(TableSpecifRobustnessFactors_bySuperpathway, metadata, by.x='original_sample',by.y='Sample_Name')
+```
+
+```{r}
+library(readxl)
+TableAttBuff_by_ko_2paper <- read_excel("Recibido/Correo_14_3_2023/TableAttBuff_by_ko_2paper.xlsx")
+```
+
+```{r}
+pathways_meta <- merge(TableAttBuff_by_ko_2paper, metadata, by.x='Sample',by.y='Sample_Name')
+```
+
+
+# Figure 9
+
+```{r}
+library(tidyverse)
+StatRobustness_values <-Robustness_meta %>% group_by(individual) %>% summarise(Attenuation.media=mean(Attenuation), Attenuation.sd=sd(Attenuation),
+                                                       Buffering.media=mean(Buffering), Buffering.sd=sd(Buffering))
+
+#Construct Labels Column
+labels_age = c()
+
+for (i in StatRobustness_values$individual) {
+  if (grepl("E", i)) {
+    labels_age = c(labels_age, "E")
+  } else if (grepl("A", i)) {
+    labels_age = c(labels_age, "A")
+  } else{
+    labels_age = c(labels_age, "I")
+  }
+}
+
+StatRobustness_values$age_group <- labels_age
+StatRobustness_values$age_group <- factor(StatRobustness_values$age_group , levels=c("I","A", "E"))
+```
+
+```{r}
+fig8a <- ggplot(data = StatRobustness_values, aes(x=Buffering.media,y=Attenuation.media))
+fig8a = fig8a + geom_errorbar(aes(xmin=Buffering.media-Buffering.sd, xmax=Buffering.media+Buffering.sd),alpha=0.5,colour='black',linetype = 3)
+fig8a = fig8a + geom_errorbar(aes(ymin=Attenuation.media-Attenuation.sd,ymax=Attenuation.media+Attenuation.sd),alpha=0.5,colour='black',linetype = 3)
+fig8a = fig8a + geom_point(aes(fill=age_group),shape = 21,colour = "black",size=3)
+fig8a = fig8a + scale_fill_manual(breaks = c("I", "A", "E"),values=c("#28d528", "#ff0808", "#4141ff"))
+fig8a = fig8a + theme_bw()+theme(axis.text.y = element_text(colour = 'black', size = 10),axis.text.x = element_text(colour = 'black', size = 10))
+fig8a = fig8a + labs(y='Attenuation', x='Buffering') + theme(legend.position = "none")
+fig8a = fig8a + facet_wrap(~age_group, ncol=1)+ggrepel::geom_text_repel(aes(label=individual))
+```
+
+```{r}
+#COndiciones de aplicabilidad / Attenuation
+
+#Normalidad
+library(tidyverse)
+Robustness_meta %>% group_by(age_group) %>% summarise(media=mean(Attenuation), sd=sd(Attenuation),norm=shapiro.test(Attenuation)$p.value) #Hay Normalidad para 2 grupos (I, A), pero no E
+#Varianza
+library(car)
+leveneTest(Robustness_meta$Attenuation ~ Robustness_meta$age_group) #p.value > 0.05, Varianzas iguales
+
+# Test a utilizar wilcox.test(x, y, paired = FALSE)
+pairwise.wilcox.test(x=Robustness_meta$Attenuation, g=Robustness_meta$age_group,paired = FALSE, p.adjust.method="none")
+```
+
+
+```{r}
+#COndiciones de aplicabilidad / Buffering
+
+#Normalidad
+library(tidyverse)
+Robustness_meta %>% group_by(age_group) %>% summarise(media=mean(Buffering), sd=sd(Buffering),norm=shapiro.test(Buffering)$p.value) #No hay Normalidad para ninguno de los 3 grupos
+#Varianza
+library(car)
+leveneTest(Robustness_meta$Buffering ~ Robustness_meta$age_group) #p.value > 0.05, Varianzas iguales
+
+# Test a utilizar wilcox.test(x, y, paired = FALSE)
+pairwise.wilcox.test(x=Robustness_meta$Buffering, g=Robustness_meta$age_group,paired = FALSE, p.adjust.method="none")
+```
+
+```{r}
+Robustness_meta$age_group <- factor(Robustness_meta$age_group , levels=c("I","A", "E"))
+
+get_boxplot = function(results_meta,y_value,y_lab){
+  my_comparisons <- list( c("I", "A"), c("A", "E"), c("I", "E") )
+  bplot = ggplot(data = results_meta,aes_string(x="age_group",y=y_value))+ geom_boxplot(aes(fill=age_group))
+  bplot = bplot + scale_fill_manual(breaks = c("I", "A", "E"),values=c("#28d528", "#ff0808", "#4141ff"))
+  bplot = bplot + theme_bw()+theme(axis.text.y = element_text(colour = 'black', size = 10),axis.text.x = element_text(colour = 'black', size = 10))
+  bplot = bplot + labs(y=y_lab, x='', title = 'Pairwise Wilcoxon rank sum test') 
+  bplot = bplot + theme(legend.position = "none")
+  bplot = bplot + stat_summary(fun=mean, geom="point", shape=25, size=4, color="black", fill="yellow")
+  bplot = bplot + ggpubr::stat_compare_means(comparisons = my_comparisons, method ='wilcox.test', paired = FALSE)
+}
+```
+
+```{r}
+boxplot_attenuation <-get_boxplot(Robustness_meta,"Attenuation","Attenuation")
+boxplot_buffering <-get_boxplot(Robustness_meta,"Buffering","Buffering")
+```
+
+```{r}
+fig8bc <- cowplot::plot_grid(boxplot_attenuation,boxplot_buffering,ncol=1,labels = c("B)","C)"))
+final_fig8 <- cowplot::plot_grid(fig8a,fig8bc,labels = c("A)",""), ncol=2, rel_widths = c(1.4,1))
+final_fig8
+```
+
+```{r}
+#Save plot
+ggsave(plot=final_fig8,filename = "Fig8_Robustness.svg",height = 10, width = 12,scale = 1,bg ="white" )
+ggsave(plot=final_fig8,filename = "Fig8_Robustness.pdf",height = 10, width = 12,scale = 1)
+```
+
+
+# Supplementary Superpaths Figures
+
+```{r}
+Superpaths_meta$age_group <- factor(Superpaths_meta$age_group , levels=c("I","A", "E"))
+
+get_boxplot_facet = function(results_meta,y_value,y_lab, comparisons, ylim_values){
+  bplot = ggplot(data = results_meta,aes_string(x="age_group",y=y_value))+ geom_boxplot(aes(fill=age_group))+facet_wrap(~funct, ncol=4)
+  bplot = bplot + scale_fill_manual(breaks = c("I", "A", "E"),values=c("#28d528", "#ff0808", "#4141ff"))
+  bplot = bplot + theme_bw()+theme(axis.text.y = element_text(colour = 'black', size = 10),axis.text.x = element_text(colour = 'black', size = 10))
+  bplot = bplot + labs(y=y_lab, x='') +ylim(ylim_values)
+  bplot = bplot + theme(legend.position = "none")
+  bplot = bplot + stat_summary(fun=mean, geom="point", shape=25, size=4, color="black", fill="yellow")
+  bplot = bplot + ggpubr::stat_pvalue_manual(comparisons,label="{p.adj}({p.adj.signif})")
+  return(bplot)
+}
+```
+
+
+## Attenuation (Supplementary Figure5)
+
+```{r}
+#COndiciones de aplicabilidad / Attenuation
+
+#Normalidad
+library(tidyverse)
+Superpaths_meta %>% group_by(age_group,funct) %>% summarise(media=mean(attenuation), sd=sd(attenuation),norm=shapiro.test(attenuation)$p.value) #No hay normalidad en todos los grupos
+
+# Test a utilizar wilcox.test(x, y, paired = FALSE)
+```
+
+```{r}
+superpaths_test_attenuation_bh =ggpubr::compare_means(attenuation ~ age_group,data=Superpaths_meta, method = "wilcox.test",paired = FALSE,group.by =c("funct"), p.adjust.method = "BH") %>% rstatix::add_significance("p.adj") %>% rstatix::add_y_position(data=Superpaths_meta,formula=attenuation ~ age_group, step.increase=12)
+```
+
+```{r}
+superpaths_test_attenuation_bon =ggpubr::compare_means(attenuation ~ age_group,data=Superpaths_meta, method = "wilcox.test",paired = FALSE,group.by =c("funct"), p.adjust.method = "bonferroni") %>% rstatix::add_significance("p.adj") %>% rstatix::add_y_position(data=Superpaths_meta,formula=attenuation ~ age_group, step.increase=12)
+```
+
+```{r,fig.height=18,fig.width=11}
+att_bh <- get_boxplot_facet(Superpaths_meta,"attenuation","Attenuation",superpaths_test_attenuation_bh, c(-2,8))
+att_bh
+```
+
+```{r}
+#Save plot
+ggsave(plot=att_bh,filename = "Attenuation_Superpaths_wilcox_padj_bh.svg",height = 18, width = 11,scale = 1,bg ="white" )
+ggsave(plot=att_bh,filename = "Attenuation_Superpaths_wilcox_padj_bh.pdf",height = 18, width = 11,scale = 1)
+```
+
+```{r,fig.height=18,fig.width=11}
+att_bon <- get_boxplot_facet(Superpaths_meta,"attenuation","Attenuation",superpaths_test_attenuation_bon, c(-2,8))
+att_bon
+```
+
+```{r}
+#Save plot
+ggsave(plot=att_bon,filename = "Attenuation_Superpaths_wilcox_padj_bonferroni.svg",height = 18, width = 11,scale = 1,bg ="white" )
+ggsave(plot=att_bon,filename = "Attenuation_Superpaths_wilcox_padj_bonferroni.pdf",height = 18, width = 11,scale = 1)
+```
+
+
+
+## Buffering (Supplementary Figure6)
+
+```{r}
+#COndiciones de aplicabilidad / buffering
+
+#Normalidad
+library(tidyverse)
+Superpaths_meta %>% group_by(age_group,funct) %>% summarise(media=mean(buffering), sd=sd(buffering),norm=shapiro.test(buffering)$p.value) #No hay normalidad en todos los grupos
+
+# Test a utilizar wilcox.test(x, y, paired = FALSE)
+```
+
+```{r}
+superpaths_test_buffering_bh =ggpubr::compare_means(buffering ~ age_group,data=Superpaths_meta, method = "wilcox.test",paired = FALSE,group.by =c("funct"), p.adjust.method = "BH") %>% rstatix::add_significance("p.adj") %>% rstatix::add_y_position(data=Superpaths_meta,formula=buffering ~ age_group, step.increase=12)
+```
+
+```{r}
+superpaths_test_buffering_bon =ggpubr::compare_means(buffering ~ age_group,data=Superpaths_meta, method = "wilcox.test",paired = FALSE,group.by =c("funct"), p.adjust.method = "bonferroni") %>% rstatix::add_significance("p.adj") %>% rstatix::add_y_position(data=Superpaths_meta,formula=buffering ~ age_group, step.increase=12)
+```
+
+```{r,fig.height=18,fig.width=11}
+buff_bh <- get_boxplot_facet(Superpaths_meta,"buffering","Buffering",superpaths_test_buffering_bh, c(0.5,1.65))
+buff_bh
+```
+
+```{r}
+#Save plot
+ggsave(plot=buff_bh,filename = "Buffering_Superpaths_wilcox_padj_bh.svg",height = 18, width = 11,scale = 1,bg ="white" )
+ggsave(plot=buff_bh,filename = "Buffering_Superpaths_wilcox_padj_bh.pdf",height = 18, width = 11,scale = 1)
+```
+
+```{r,fig.height=18,fig.width=11}
+buff_bon <- get_boxplot_facet(Superpaths_meta,"buffering","Buffering",superpaths_test_buffering_bon, c(0.5,1.65))
+buff_bon
+```
+
+```{r}
+#Save plot
+ggsave(plot=buff_bon,filename = "Buffering_Superpaths_wilcox_padj_bonferroni.svg",height = 18, width = 11,scale = 1,bg ="white" )
+ggsave(plot=buff_bon,filename = "Buffering_Superpaths_wilcox_padj_bonferroni.pdf",height = 18, width = 11,scale = 1)
+```
+
+#pATHWAYS Test Wilcox (Supplementary Table 9)
+
+
+##Attenuation
+```{r}
+pathways_test_attenuation_bh =ggpubr::compare_means(Attenuation ~ age_group,data=pathways_meta, method = "wilcox.test",paired = FALSE,group.by =c("Pathway"), p.adjust.method = "BH") %>% rstatix::add_significance("p.adj")
+#bh_EI
+pathways_test_attenuation_bh_EI=filter(pathways_test_attenuation_bh, group1=="E" & group2=="I")
+pathways_test_attenuation_bh_EI=pathways_test_attenuation_bh_EI[,c("Pathway","p","p.adj")]
+colnames(pathways_test_attenuation_bh_EI)=c("pathway","p.value(E vs I)","adj.p.value(E vs I)")
+#bh_AE
+pathways_test_attenuation_bh_AE=filter(pathways_test_attenuation_bh, group1=="A" & group2=="E")
+pathways_test_attenuation_bh_AE=pathways_test_attenuation_bh_AE[,c("Pathway","p","p.adj")]
+colnames(pathways_test_attenuation_bh_AE)=c("pathway","p.value(A vs E)","adj.p.value(A vs E)")
+#bh_AI
+pathways_test_attenuation_bh_AI=filter(pathways_test_attenuation_bh, group1=="A" & group2=="I")
+pathways_test_attenuation_bh_AI=pathways_test_attenuation_bh_AI[,c("Pathway","p","p.adj")]
+colnames(pathways_test_attenuation_bh_AI)=c("pathway","p.value(A vs I)","adj.p.value(A vs I)")
+```
+
+```{r}
+pathways_attenuation_stats = pathways_meta %>% group_by(age_group,Pathway) %>% summarise(media=mean(Attenuation), sd=sd(Attenuation))
+#A stats
+pathways_attenuation_stats_A=filter(pathways_attenuation_stats, age_group=="A")
+colnames(pathways_attenuation_stats_A)=c("age_group","pathway","A(mean)","A(sd)")
+pathways_attenuation_stats_A=pathways_attenuation_stats_A[,2:4]
+#E stats
+pathways_attenuation_stats_E=filter(pathways_attenuation_stats, age_group=="E")
+colnames(pathways_attenuation_stats_E)=c("age_group","pathway","E(mean)","E(sd)")
+pathways_attenuation_stats_E=pathways_attenuation_stats_E[,2:4]
+#I stats
+pathways_attenuation_stats_I=filter(pathways_attenuation_stats, age_group=="I")
+colnames(pathways_attenuation_stats_I)=c("age_group","pathway","I(mean)","I(sd)")
+pathways_attenuation_stats_I=pathways_attenuation_stats_I[,2:4]
+```
+
+```{r}
+Attenuation_list <- list(pathways_attenuation_stats_I,pathways_attenuation_stats_A,pathways_attenuation_stats_E,pathways_test_attenuation_bh_AI,pathways_test_attenuation_bh_EI,pathways_test_attenuation_bh_AE)
+attenuation_bh_table = Attenuation_list %>% reduce(full_join, by='pathway')
+```
+
+```{r}
+write.table(attenuation_bh_table,file="attenuation_wilcox_bh_table.tsv",row.names = F,sep = "\t")
+```
+
+##Buffering
+```{r}
+pathways_test_buffering_bh =ggpubr::compare_means(Buffering ~ age_group,data=pathways_meta, method = "wilcox.test",paired = FALSE,group.by =c("Pathway"), p.adjust.method = "BH") %>% rstatix::add_significance("p.adj")
+
+#bh_EI
+pathways_test_buffering_bh_EI=filter(pathways_test_buffering_bh, group1=="E" & group2=="I")
+pathways_test_buffering_bh_EI=pathways_test_buffering_bh_EI[,c("Pathway","p","p.adj")]
+colnames(pathways_test_buffering_bh_EI)=c("pathway","p.value(E vs I)","adj.p.value(E vs I)")
+#bh_AE
+pathways_test_buffering_bh_AE=filter(pathways_test_buffering_bh, group1=="A" & group2=="E")
+pathways_test_buffering_bh_AE=pathways_test_buffering_bh_AE[,c("Pathway","p","p.adj")]
+colnames(pathways_test_buffering_bh_AE)=c("pathway","p.value(A vs E)","adj.p.value(A vs E)")
+#bh_AI
+pathways_test_buffering_bh_AI=filter(pathways_test_buffering_bh, group1=="A" & group2=="I")
+pathways_test_buffering_bh_AI=pathways_test_buffering_bh_AI[,c("Pathway","p","p.adj")]
+colnames(pathways_test_buffering_bh_AI)=c("pathway","p.value(A vs I)","adj.p.value(A vs I)")
+```
+
+```{r}
+pathways_buffering_stats = pathways_meta %>% group_by(age_group,Pathway) %>% summarise(media=mean(Buffering), sd=sd(Buffering))
+#A stats
+pathways_buffering_stats_A=filter(pathways_buffering_stats, age_group=="A")
+colnames(pathways_buffering_stats_A)=c("age_group","pathway","A(mean)","A(sd)")
+pathways_buffering_stats_A=pathways_buffering_stats_A[,2:4]
+#E stats
+pathways_buffering_stats_E=filter(pathways_buffering_stats, age_group=="E")
+colnames(pathways_buffering_stats_E)=c("age_group","pathway","E(mean)","E(sd)")
+pathways_buffering_stats_E=pathways_buffering_stats_E[,2:4]
+#I stats
+pathways_buffering_stats_I=filter(pathways_buffering_stats, age_group=="I")
+colnames(pathways_buffering_stats_I)=c("age_group","pathway","I(mean)","I(sd)")
+pathways_buffering_stats_I=pathways_buffering_stats_I[,2:4]
+```
+
+```{r}
+Buffering_list <- list(pathways_buffering_stats_I,pathways_buffering_stats_A,pathways_buffering_stats_E,pathways_test_buffering_bh_AI,pathways_test_buffering_bh_EI,pathways_test_buffering_bh_AE)
+buffering_bh_table = Buffering_list %>% reduce(full_join, by='pathway')
+```
+
+```{r}
+write.table(buffering_bh_table,file="buffering_wilcox_bh_table.tsv",row.names = F,sep = "\t")
+```
+

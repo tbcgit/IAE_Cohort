@@ -1,0 +1,22 @@
+ID	A	E	I	DESCRIPTION
+p_Firmicutes;c_Clostridia;o_Eubacteriales;f_NA;g_NA	360	593	622	p_Firmicutes;c_Clostridia;o_Eubacteriales;f_NA;g_NA
+p_Proteobacteria;c_Gammaproteobacteria;o_Enterobacterales;f_Enterobacteriaceae;g_NA	10	10	35	p_Proteobacteria;c_Gammaproteobacteria;o_Enterobacterales;f_Enterobacteriaceae;g_NA
+p_Proteobacteria;c_Gammaproteobacteria;o_Enterobacterales;f_Enterobacteriaceae;g_Escherichia	35	31	128	p_Proteobacteria;c_Gammaproteobacteria;o_Enterobacterales;f_Enterobacteriaceae;g_Escherichia
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Rikenellaceae;g_Alistipes	847	752	1654	p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Rikenellaceae;g_Alistipes
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Prevotellaceae;g_Prevotella	15	0	0	p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Prevotellaceae;g_Prevotella
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_NA;g_NA	653	1696	908	p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_NA;g_NA
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Bacteroidaceae;g_Bacteroides	499	518	1127	p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Bacteroidaceae;g_Bacteroides
+p_Firmicutes;c_Clostridia;o_Eubacteriales;f_Oscillospiraceae;g_NA	38	81	21	p_Firmicutes;c_Clostridia;o_Eubacteriales;f_Oscillospiraceae;g_NA
+p_Firmicutes;c_NA;o_NA;f_NA;g_NA	190	241	351	p_Firmicutes;c_NA;o_NA;f_NA;g_NA
+p_Verrucomicrobia;c_Verrucomicrobiae;o_Verrucomicrobiales;f_Akkermansiaceae;g_Akkermansia	89	107	504	p_Verrucomicrobia;c_Verrucomicrobiae;o_Verrucomicrobiales;f_Akkermansiaceae;g_Akkermansia
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Rikenellaceae;g_NA	50	122	18	p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Rikenellaceae;g_NA
+p_Bacteroidetes;c_NA;o_NA;f_NA;g_NA	0	24	0	p_Bacteroidetes;c_NA;o_NA;f_NA;g_NA
+p_Proteobacteria;c_Deltaproteobacteria;o_Desulfovibrionales;f_Desulfovibrionaceae;g_NA	3	16	0	p_Proteobacteria;c_Deltaproteobacteria;o_Desulfovibrionales;f_Desulfovibrionaceae;g_NA
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Barnesiellaceae;g_Barnesiella	2	10	0	p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Barnesiellaceae;g_Barnesiella
+p_Proteobacteria;c_Gammaproteobacteria;o_Enterobacterales;f_Enterobacteriaceae;g_Klebsiella	2	0	22	p_Proteobacteria;c_Gammaproteobacteria;o_Enterobacterales;f_Enterobacteriaceae;g_Klebsiella
+p_Firmicutes;c_Clostridia;o_NA;f_NA;g_NA	5	4	1	p_Firmicutes;c_Clostridia;o_NA;f_NA;g_NA
+p_NA;c_NA;o_NA;f_NA;g_NA	8	24	6	p_NA;c_NA;o_NA;f_NA;g_NA
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Porphyromonadaceae;g_Porphyromonas	2	12	2	p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Porphyromonadaceae;g_Porphyromonas
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Muribaculaceae;g_Sodaliphilus	0	14	0	p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Muribaculaceae;g_Sodaliphilus
+p_Firmicutes;c_Clostridia;o_Eubacteriales;f_NA;g_Candidatus Scatomorpha	23	24	9	p_Firmicutes;c_Clostridia;o_Eubacteriales;f_NA;g_Candidatus Scatomorpha
+p_Actinobacteria;c_Actinomycetia;o_Corynebacteriales;f_Lawsonellaceae;g_Lawsonella	0	0	4	p_Actinobacteria;c_Actinomycetia;o_Corynebacteriales;f_Lawsonellaceae;g_Lawsonella

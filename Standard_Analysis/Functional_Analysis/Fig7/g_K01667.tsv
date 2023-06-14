@@ -1,0 +1,22 @@
+ID	A.DNA	E.DNA	I.DNA	A.RNA	E.RNA	I.RNA
+p_Firmicutes;c_Clostridia;o_Eubacteriales;f_NA;g_NA	360	593	622	459	253	159
+p_Proteobacteria;c_Gammaproteobacteria;o_Enterobacterales;f_Enterobacteriaceae;g_NA	10	10	35	0	0	0
+p_Proteobacteria;c_Gammaproteobacteria;o_Enterobacterales;f_Enterobacteriaceae;g_Escherichia	35	31	128	0	0	2
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Rikenellaceae;g_Alistipes	847	752	1654	172	38	18
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Prevotellaceae;g_Prevotella	15	0	0	12	0	0
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_NA;g_NA	653	1696	908	251	100	96
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Bacteroidaceae;g_Bacteroides	499	518	1127	59	22	42
+p_Firmicutes;c_Clostridia;o_Eubacteriales;f_Oscillospiraceae;g_NA	38	81	21	0	1	0
+p_Firmicutes;c_NA;o_NA;f_NA;g_NA	190	241	351	49	31	50
+p_Verrucomicrobia;c_Verrucomicrobiae;o_Verrucomicrobiales;f_Akkermansiaceae;g_Akkermansia	89	107	504	1	1	5
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Rikenellaceae;g_NA	50	122	18	3	14	0
+p_Bacteroidetes;c_NA;o_NA;f_NA;g_NA	0	24	0	6	221	2
+p_Proteobacteria;c_Deltaproteobacteria;o_Desulfovibrionales;f_Desulfovibrionaceae;g_NA	3	16	0	0	4	0
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Barnesiellaceae;g_Barnesiella	2	10	0	0	0	0
+p_Proteobacteria;c_Gammaproteobacteria;o_Enterobacterales;f_Enterobacteriaceae;g_Klebsiella	2	0	22	0	0	0
+p_Firmicutes;c_Clostridia;o_NA;f_NA;g_NA	5	4	1	7	0	0
+p_NA;c_NA;o_NA;f_NA;g_NA	8	24	6	0	3	0
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Porphyromonadaceae;g_Porphyromonas	2	12	2	1	0	0
+p_Bacteroidetes;c_Bacteroidia;o_Bacteroidales;f_Muribaculaceae;g_Sodaliphilus	0	14	0	0	1	0
+p_Firmicutes;c_Clostridia;o_Eubacteriales;f_NA;g_Candidatus Scatomorpha	23	24	9	0	0	0
+p_Actinobacteria;c_Actinomycetia;o_Corynebacteriales;f_Lawsonellaceae;g_Lawsonella	0	0	4	0	0	0

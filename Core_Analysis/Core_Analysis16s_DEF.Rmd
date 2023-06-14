@@ -1,0 +1,875 @@
+---
+title: "IAE Project:Core Analysis 16S"
+author: "Samuel Piquer-Esteban"
+date: "Última modificación `r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+<div style="text-align: justify">
+
+\newpage
+
+# Load Libraries
+```{r}
+library(phyloseq)
+library(microbiome)
+library(ComplexHeatmap)
+library(ggvenn)
+library(RColorBrewer)
+```
+
+# Load data and format
+```{r}
+#Metadata tables
+##Metadata time points
+#Load and format data
+metadata_tp=read.csv("metadata_IAE_time-points.tsv", header = T, sep='\t', na.strings=c("","NA"))
+metadata_tp$sample_date2=as.Date(metadata_tp$sample_date,"%d/%m/%Y")
+##Metadata individuals
+#Load and format data
+metadata_ind=read.csv("metadata_IAE_individuals.tsv", header = T, sep='\t', na.strings=c("","NA"))
+#Reorder Host_age_groups
+metadata_ind$host_age_group<- factor(metadata_ind$host_age_group,levels = c("Infant","Adult","Elder"))
+##Merge metadata tables
+metadata=merge(metadata_tp,metadata_ind,by="individual")
+##Get sample names as row.names
+##1st remove "_" from sample names
+sample_names=gsub('_', '', metadata$sample)
+##2nd add "16S_" at the beginning
+sample_names2=paste("16S_",sample_names, sep ="")
+##Add sample names as rows
+row.names(metadata)=sample_names2
+
+#Taxonomy Table
+count_table=read.table("./data/ASVs_counts_DEF.tsv", header = T, sep = "\t", row.names = 1, check.names = F)
+
+#Count Table
+taxo_table=read.table("./data/ASVs_taxonomy_SILVA_v138_both_thr50_DEF_last.tsv", header = T, sep = "\t", row.names = 1, check.names = F)
+```
+
+# Make Phyloseq Object
+```{r}
+#Pre-format
+##Taxa as matrix
+taxo_matrix=as.matrix(taxo_table)
+TAX_PSEQ=tax_table(taxo_matrix)
+##Count data as matrix
+count_matrix=as.matrix(count_table)
+COUNT_PSEQ=otu_table(count_matrix, taxa_are_rows=T)
+##Metadata
+META_PSEQ=sample_data(metadata)
+#Transform to pseq object
+pseq=phyloseq(COUNT_PSEQ,META_PSEQ,TAX_PSEQ)
+pseq
+#Save for later
+#save(pseq, file="./data/pseq_16S_IAE.RData")
+```
+
+# TaxGlom at last-taxa level (aprox. genus)
+```{r}
+pseq_last=tax_glom(pseq,"last",NArm = FALSE)
+pseq_last
+```
+
+# Common Core Analysis
+
+## Define Age Group Cores
+
+A) Infant Core 50%, 80% and 100% Prevalence Core:
+```{r}
+#First let's subset the samples
+pseq_last_I=subset_samples(pseq_last,host_age_group=="Infant")
+pseq_last_I<-prune_taxa(taxa_sums(pseq_last_I)>0, pseq_last_I)
+pseq_last_I
+#Get proportions
+pseq_last_I_prop=microbiome::transform(pseq_last_I,"compositional")
+```
+
+```{r}
+#Set Thresholds
+PREV100=100/100
+PREV80=80/100
+PREV50=50/100
+ABUND=0.0001
+#Get Core Phyloseq Objectsn and core taxa
+##100%
+pseq_last_I_core100=core(pseq_last_I_prop, detection = ABUND, prevalence = PREV100, include.lowest = T)
+coretaxa_last_I_core100=data.frame(tax_table(pseq_last_I_core100))$last
+pseq_last_I_core100
+##80%
+pseq_last_I_core80=core(pseq_last_I_prop, detection = ABUND, prevalence = PREV80, include.lowest = T)
+coretaxa_last_I_core80=data.frame(tax_table(pseq_last_I_core80))$last
+pseq_last_I_core80
+##50%
+pseq_last_I_core50=core(pseq_last_I_prop, detection = ABUND, prevalence = PREV50, include.lowest = T)
+coretaxa_last_I_core50=data.frame(tax_table(pseq_last_I_core50))$last
+pseq_last_I_core50
+```
+
+B) Adult Core 50%, 80% and 100% Prevalence Core:
+```{r}
+#First let's subset the samples
+pseq_last_A=subset_samples(pseq_last,host_age_group=="Adult")
+pseq_last_A<-prune_taxa(taxa_sums(pseq_last_A)>0, pseq_last_A)
+pseq_last_A
+#Get proportions
+pseq_last_A_prop=microbiome::transform(pseq_last_A,"compositional")
+```
+
+```{r}
+#Set Thresholds
+PREV100=100/100
+PREV80=80/100
+PREV50=50/100
+ABUND=0.0001
+#Get Core Phyloseq Objects
+##100%
+pseq_last_A_core100=core(pseq_last_A_prop, detection = ABUND, prevalence = PREV100, include.lowest = T)
+coretaxa_last_A_core100=data.frame(tax_table(pseq_last_A_core100))$last
+pseq_last_A_core100
+##80%
+pseq_last_A_core80=core(pseq_last_A_prop, detection = ABUND, prevalence = PREV80, include.lowest = T)
+coretaxa_last_A_core80=data.frame(tax_table(pseq_last_A_core80))$last
+pseq_last_A_core80
+##50%
+pseq_last_A_core50=core(pseq_last_A_prop, detection = ABUND, prevalence = PREV50, include.lowest = T)
+coretaxa_last_A_core50=data.frame(tax_table(pseq_last_A_core50))$last
+pseq_last_A_core50
+```
+
+C) Elder Core 50%, 80% and 100% Prevalence Core:
+```{r}
+#First let's subset the samples
+pseq_last_E=subset_samples(pseq_last,host_age_group=="Elder")
+pseq_last_E<-prune_taxa(taxa_sums(pseq_last_E)>0, pseq_last_E)
+pseq_last_E
+#Get proportions
+pseq_last_E_prop=microbiome::transform(pseq_last_E,"compositional")
+```
+
+```{r}
+#Set Thresholds
+PREV100=100/100
+PREV80=80/100
+PREV50=50/100
+ABUND=0.0001
+#Get Core Phyloseq Objects
+##100%
+pseq_last_E_core100=core(pseq_last_E_prop, detection = ABUND, prevalence = PREV100, include.lowest = T)
+coretaxa_last_E_core100=data.frame(tax_table(pseq_last_E_core100))$last
+pseq_last_E_core100
+##80%
+pseq_last_E_core80=core(pseq_last_E_prop, detection = ABUND, prevalence = PREV80, include.lowest = T)
+coretaxa_last_E_core80=data.frame(tax_table(pseq_last_E_core80))$last
+pseq_last_E_core80
+##50%
+pseq_last_E_core50=core(pseq_last_E_prop, detection = ABUND, prevalence = PREV50, include.lowest = T)
+coretaxa_last_E_core50=data.frame(tax_table(pseq_last_E_core50))$last
+pseq_last_E_core50
+```
+
+## Get Presence-Absence data.frame by prevalence cores (Supplementary Table4)
+```{r}
+listIn=list(coretaxa_last_E_core50,coretaxa_last_E_core80,coretaxa_last_E_core100,
+            coretaxa_last_A_core50,coretaxa_last_A_core80,coretaxa_last_A_core100,
+            coretaxa_last_I_core50,coretaxa_last_I_core80,coretaxa_last_I_core100)
+cores_df=as.data.frame(list_to_matrix(listIn))
+colnames(cores_df)=c("Elders 50%","Elders 80%","Elders 100%","Adults 50%","Adults 80%","Adults 100%","Infants 50%","Infants 80%","Infants 100%")
+```
+
+```{r}
+#Save presence-absence table 
+tax_info=tax_table(pseq_last)[,c("domain","phylum","class","order","family","genus","last")]
+pa_table_tax=merge(tax_info,cores_df,by.y=0,by.x="last")
+write.table(pa_table_tax,file="./results/presence-absencetable_coretaxa_IAE_lastTaxon.tsv",row.names = F,sep = "\t")
+```
+
+## Intersect Cores
+
+A) All Cores Upset Plot:
+```{r}
+library(ggplot2)
+library(ComplexUpset)
+metadatos = data.frame(set=colnames(cores_df),variables=c(rep("Elders",3),rep("Adults",3),rep("Infants",3)))
+cols=c("Elders" = "#FFFFB3", "Adults" = "#FB8072","Infants"="#80D8FF")
+#Get initial upset plot
+upset_graph=upset(cores_df, colnames(cores_df),width_ratio=0.15,height_ratio=0.7,name='',wrap = F,sort_intersections_by='degree',
+      base_annotations = list('Number of Intersecting Taxa'=intersection_size(bar_number_threshold=1)),
+      set_sizes = upset_set_size()+ theme(axis.ticks.x=element_line())+ylab('Number of Taxa'),sort_sets=FALSE,
+      stripes=upset_stripes(geom=geom_segment(size=5),mapping = aes(color=variables),colors=cols,data=metadatos))+theme(legend.position="none")
+upset_graph
+```
+
+```{r}
+ggsave(upset_graph,filename = "./results/Intersect/upset_diagram_16S_cores_IAE_lastTaxon.svg",height = 6,width =9)
+```
+
+B) Adult Cores Venn Diagram:
+```{r}
+# Make general input data.frame
+cores_df_venn=tibble(value=row.names(cores_df),
+                     `Adults 50%`=as.logical(cores_df$`Adults 50%`),
+                     `Adults 80%`=as.logical(cores_df$`Adults 80%`),
+                     `Adults 100%`=as.logical(cores_df$`Adults 100%`),
+                     `Elders 50%`=as.logical(cores_df$`Elders 50%`),
+                     `Elders 80%`=as.logical(cores_df$`Elders 80%`),
+                     `Elders 100%`=as.logical(cores_df$`Elders 100%`),
+                     `Infants 50%`=as.logical(cores_df$`Infants 50%`),
+                     `Infants 80%`=as.logical(cores_df$`Infants 80%`),
+                     `Infants 100%`=as.logical(cores_df$`Infants 100%`))
+#Get venn diagram
+venn_adults=ggvenn(cores_df_venn, c("Adults 50%","Adults 80%","Adults 100%"),
+                   fill_color = c("#FF8A8A", "#FF2400","#D10000"),
+                   show_percentage = F,stroke_size = 0.5, set_name_size = 6,text_size = 5)
+venn_adults
+```
+
+```{r}
+ggsave(venn_adults,filename = "./results/Intersect/venn_diagram_16S_AdultCores_IAE_lastTaxon.svg",height = 6,width =9,bg="white")
+```
+
+C) Infant Cores Venn Diagram:
+```{r}
+#Get venn diagram
+venn_infants=ggvenn(cores_df_venn, c("Infants 50%","Infants 80%","Infants 100%"),
+                   fill_color = c("#ADD8E6", "#007FFF","#0047AB"),
+                   show_percentage = F,stroke_size = 0.5, set_name_size = 6,text_size = 5)
+venn_infants
+```
+
+```{r}
+ggsave(venn_infants,filename = "./results/Intersect/venn_diagram_16S_InfantCores_IAE_lastTaxon.svg",height = 6,width =9,bg="white")
+```
+
+
+D) Elder Cores Venn Diagram:
+```{r}
+#Get venn diagram
+venn_elders=ggvenn(cores_df_venn, c("Elders 50%","Elders 80%","Elders 100%"),
+                   fill_color = c("#FFFFE0", "#FFF600","#FFA700"),
+                   show_percentage = F,stroke_size = 0.5, set_name_size = 6,text_size = 5)
+venn_elders
+```
+
+```{r}
+ggsave(venn_elders,filename = "./results/Intersect/venn_diagram_16S_ElderCores_IAE_lastTaxon.svg",height = 6,width =9,bg="white")
+```
+
+E) 50% Cores Venn Diagram:
+```{r}
+#Get venn diagram
+venn_50=ggvenn(cores_df_venn, c("Infants 50%","Adults 50%","Elders 50%"),
+                   fill_color = c("#77dd77", "#FF2400", "#007FFF"),
+                   show_percentage = F,stroke_size = 0.5, set_name_size = 6,text_size = 5)
+venn_50
+```
+
+```{r}
+ggsave(venn_50,filename = "./results/Intersect/venn_diagram_16S_50precCores_IAE_lastTaxon.svg",height = 6,width =9,bg="white")
+ggsave(venn_50,filename = "./results/Intersect/venn_diagram_16S_50precCores_IAE_lastTaxon.png",height = 6,width =9,bg="white")
+```
+
+F) 80% Cores Venn Diagram: 
+```{r}
+#Get venn diagram
+venn_80=ggvenn(cores_df_venn, c("Infants 80%","Adults 80%","Elders 80%"),
+                   fill_color = c("#77dd77", "#FF2400", "#007FFF"),
+                   show_percentage = F,stroke_size = 0.5, set_name_size = 6,text_size = 5)
+venn_80
+```
+
+```{r}
+ggsave(venn_80,filename = "./results/Intersect/venn_diagram_16S_80precCores_IAE_lastTaxon.svg",height = 6,width =9,bg="white")
+ggsave(venn_80,filename = "./results/Intersect/venn_diagram_16S_80precCores_IAE_lastTaxon.png",height = 6,width =9,bg="white")
+```
+
+G) 100% Cores Venn Diagram: 
+```{r}
+#Get venn diagram
+venn_100=ggvenn(cores_df_venn, c("Infants 100%","Adults 100%","Elders 100%"),
+                   fill_color = c("#77dd77", "#FF2400", "#007FFF"),
+                   show_percentage = F,stroke_size = 0.5, set_name_size = 6,text_size = 5)
+venn_100
+```
+
+```{r}
+ggsave(venn_100,filename = "./results/Intersect/venn_diagram_16S_100precCores_IAE_lastTaxon.svg",height = 6,width =9,bg="white")
+ggsave(venn_100,filename = "./results/Intersect/venn_diagram_16S_100precCores_IAE_lastTaxon.png",height = 6,width =9,bg="white")
+```
+
+##Get Core Taxa Distribution and Construct Figure3
+```{r}
+#Short Cores
+core_taxa_sorted=names(sort(rowSums(cores_df),decreasing = T))
+
+#Get Cores Info by Age Groups Cores
+##Get Core Info for Infants Core Taxa
+core_infoI=c()
+for (i in core_taxa_sorted) {
+  if (cores_df[i,"Infants 100%"]==1) {
+    core_infoI=c(core_infoI,"Common to 50%, 80% & 100% cores")
+  } else{
+    if (cores_df[i,"Infants 80%"]==1) {
+      core_infoI=c(core_infoI,"Common to 50% & 80% cores")
+    } else{
+      if (cores_df[i,"Infants 50%"]==1) {
+        core_infoI=c(core_infoI,"Unique to 50% core")
+      }else{
+        core_infoI=c(core_infoI,"Not core")
+      }
+    }
+  }
+}
+##Get Core Info for Adults Core Taxa
+core_infoA=c()
+for (i in core_taxa_sorted) {
+  if (cores_df[i,"Adults 100%"]==1) {
+    core_infoA=c(core_infoA,"Common to 50%, 80% & 100% cores")
+  } else{
+    if (cores_df[i,"Adults 80%"]==1) {
+      core_infoA=c(core_infoA,"Common to 50% & 80% cores")
+    } else{
+      if (cores_df[i,"Adults 50%"]==1) {
+        core_infoA=c(core_infoA,"Unique to 50% core")
+      }else{
+        core_infoA=c(core_infoA,"Not core")
+      }
+    }
+  }
+}
+##Get Core Info for Elders Core Taxa
+core_infoE=c()
+for (i in core_taxa_sorted) {
+  if (cores_df[i,"Elders 100%"]==1) {
+    core_infoE=c(core_infoE,"Common to 50%, 80% & 100% cores")
+  } else{
+    if (cores_df[i,"Elders 80%"]==1) {
+      core_infoE=c(core_infoE,"Common to 50% & 80% cores")
+    } else{
+      if (cores_df[i,"Elders 50%"]==1) {
+        core_infoE=c(core_infoE,"Unique to 50% core")
+      }else{
+        core_infoE=c(core_infoE,"Not core")
+      }
+    }
+  }
+}
+#Save Cores Info has data.frame
+cores_info=data_frame(Taxa=core_taxa_sorted,CoresInfoInfants=core_infoI,CoresInfoAdults=core_infoA,CoresInfoElders=core_infoE)
+
+#Set color palette
+core_cols=c(`Common to 50%, 80% & 100% cores`="skyblue",`Common to 50% & 80% cores`="#CC99FF",`Unique to 50% core`="#F5BD1F",`Not core`="#3F7EB3")
+#Infants Core Taxa Info
+hI=ggplot(cores_info)+geom_bar(mapping = aes(x = factor(Taxa,levels = core_taxa_sorted), y = 1, fill = CoresInfoInfants), stat = "identity", width = 1, color="black")+theme_void()+ggtitle("Infants Core Taxa")+ scale_fill_manual(values = core_cols)+theme(legend.position = "none")
+#Adults Core Taxa Info
+hA=ggplot(cores_info)+geom_bar(mapping = aes(x = factor(Taxa,levels = core_taxa_sorted), y = 1, fill = CoresInfoAdults), stat = "identity", width = 1,color="black")+theme_void()+ggtitle("Adults Core Taxa")+ scale_fill_manual(values = core_cols)+labs(fill="Core Taxa Distribution")+theme(legend.position = "bottom")
+##Get legend
+legend=cowplot::get_legend(hA)
+##REmove legend from hA
+hA=hA+theme(legend.position = "none")
+#Elders Core Taxa Info
+hE=ggplot(cores_info)+geom_bar(mapping = aes(x = factor(Taxa,levels = core_taxa_sorted), y = 1, fill = CoresInfoElders), stat = "identity", width = 1,color="black")+theme_void()+ggtitle("Elders Core Taxa")+ scale_fill_manual(values = core_cols)+theme(legend.position = "none")
+
+hnames=ggplot(cores_info)+geom_bar(mapping = aes(x = factor(Taxa,levels = core_taxa_sorted), y = 1), stat = "identity", width = 1,color="black")+theme_void()+theme(axis.text.x = element_text(angle = 90, vjust = 0.7, hjust=1))
+```
+
+
+```{r,fig.height=8.3,fig.width=18}
+fig3D<-plot_grid(plot_grid(plot_grid(hI,hA,hE, align = "v", ncol = 1, axis = "tb", rel_heights = c(1,1,1)),hnames,ncol = 1,rel_heights = c(1,1)))
+fig3d2<-plot_grid(fig3D,legend,nrow = 2,rel_heights = c(1,0.1))
+FIG3D3<-plot_grid(NULL,fig3d2,NULL,labels = "D)",rel_widths = c(0.03,1,0.03),ncol = 3)
+```
+
+```{r,fig.height=14.5,fig.width=15}
+fig3abc=plot_grid(venn_100,venn_80,venn_50,labels = c("A)","B)","C)"),nrow = 1)
+```
+
+```{r,fig.width=15,fig.height=14}
+fig3<-plot_grid(fig3abc,FIG3D3,nrow = 2,rel_heights = c(1,1.28))
+fig3
+```
+
+```{r}
+ggsave(fig3,filename = "./results/Intersect/fig3.svg",height = 16,width =15.5,bg="white")
+ggsave(fig3,filename = "./results/Intersect/fig3.png",height = 16,width =15.5,bg="white")
+ggsave(fig3,filename = "./results/Intersect/fig3.pdf",height = 14.3,width =15.5,bg="white")
+```
+
+## Core Taxa Prevalence Heatmaps
+
+A) Prevalence Heatmap Core taxa 50%:
+```{r}
+#Get proportions for all samples
+pseq_last_prop=microbiome::transform(pseq_last,"compositional")
+#Get list of taxa in all 50% cores(infant, adult, elder)
+cores50taxa=unique(c(coretaxa_last_E_core50,coretaxa_last_I_core50,coretaxa_last_A_core50))
+#Subset taxa of interest
+pseq_last_cores50=subset_taxa(pseq_last_prop,last %in% cores50taxa)
+
+#Set abundance threshold
+ABUND=0.0001
+#Get prevalences in all samples
+prev_table=ifelse(otu_table(pseq_last_cores50)>=ABUND,1,0)
+All_Samples_Prev=apply(prev_table,1,sum)/dim(prev_table)[2]
+#Get prevalences per host_age_group
+##Adult Prevalences
+int_groups=c("Adult")
+prueba=subset_samples(pseq_last_cores50,host_age_group %in% int_groups)
+prev_table=ifelse(otu_table(prueba)>=ABUND,1,0)
+Adult_prev=apply(prev_table,1,sum)/dim(prev_table)[2]
+##Infant Prevalences
+int_groups=c("Infant")
+prueba=subset_samples(pseq_last_cores50,host_age_group %in% int_groups)
+prev_table=ifelse(otu_table(prueba)>=ABUND,1,0)
+Infant_prev=apply(prev_table,1,sum)/dim(prev_table)[2]
+##Elder Prevalences
+int_groups=c("Elder")
+prueba=subset_samples(pseq_last_cores50,host_age_group %in% int_groups)
+prev_table=ifelse(otu_table(prueba)>=ABUND,1,0)
+Elder_prev=apply(prev_table,1,sum)/dim(prev_table)[2]
+#Make final prevalence table
+prevalences_table_core_taxa=data.frame(`All Samples`=All_Samples_Prev, Infants=Infant_prev, Adults=Adult_prev, Elders=Elder_prev,check.names = F)
+#Change taxa names
+rownames(prevalences_table_core_taxa)=as.vector(tax_table(pseq_last_cores50)[,"last"])
+```
+
+```{r}
+#Get phylum and domain anotations
+
+##Domain
+dom_info=as.vector(tax_table(pseq_last_cores50)[,"domain"])
+leyend_uniq_tax_dom=na.exclude(unique(dom_info))
+dom_colors=colorRampPalette(brewer.pal(9, name="Set3"))(length(leyend_uniq_tax_dom))
+names(dom_colors)=leyend_uniq_tax_dom
+
+##Phylum
+phy_info=as.vector(tax_table(pseq_last_cores50)[,"phylum"])
+leyend_uniq_tax_phy=na.exclude(unique(phy_info))
+phy_colors=colorRampPalette(brewer.pal(12, name="Paired"))(length(leyend_uniq_tax_phy))
+names(phy_colors)=leyend_uniq_tax_phy
+
+##Include annotations
+lateral_info <-ComplexHeatmap::rowAnnotation(Domain=dom_info,Phylum=phy_info,gp = grid::gpar(col ="black"),
+                                             col=list(Domain=dom_colors,Phylum=phy_colors))
+
+#Set color palette
+color_cor=c("#5E4FA2","#3288BD","#3288BD","#3288BD","#3288BD","#FEE08B","#FEE08B","#FEE08B","#F46D43","#F46D43","#9E0142")
+##Get initial heatmap
+htA1<-ComplexHeatmap::Heatmap(prevalences_table_core_taxa, heatmap_legend_param=list(title="Prevalence",at=c(0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1)),
+                              show_column_names = TRUE, column_order = colnames(prevalences_table_core_taxa),
+                              column_names_rot = 45,column_title_side = "bottom", 
+                              row_names_max_width = unit(10, "cm"),border_gp = grid::gpar(col = "black", lty = 1),
+                              col = color_cor,rect_gp = grid::gpar(col = "black", lwd = 2),right_annotation = lateral_info,
+                              cell_fun=function(j, i, x, y, w, h, col) { grid.text(round(prevalences_table_core_taxa[i, j],3), x, y)})
+##Convert to ggplot
+gb_htA1= grid.grabExpr(draw(htA1))
+gg_htA1=ggpubr::as_ggplot(gb_htA1)
+```
+
+```{r,fig.width=10,fig.height=18}
+gg_htA1
+```
+
+```{r}
+ggsave(gg_htA1,filename = "./results/Heatmaps/Cores50perc_Prevalence_Heatmap_bygroups_IAE_lastTaxon.svg",height = 18,width =10)
+```
+
+B) Get appearances by individual for all core taxa:
+```{r}
+#Get inputs
+##Get Proportions for core taxa
+cores50_last_prop=data.frame(otu_table(pseq_last_cores50),check.names = F)
+##Get taxa for top taxa
+cores50_last_tax=data.frame(tax_table(pseq_last_cores50))
+##Change taxa names to full taxonomy
+row.names(cores50_last_prop)=cores50_last_tax$last
+##Get t matrix
+t_cores50_last_prop=t(cores50_last_prop)
+#Get presence by sample
+ABUND=0.0001
+cores50_last_samples_presence=data.frame(ifelse(t_cores50_last_prop>=ABUND,1,0),check.names = F)
+##Add group column
+group_column=data.frame(sample_data(pseq_last_cores50)[,"individual"])
+cores50_last_samples_presence_inds=cbind(cores50_last_samples_presence,group_column)
+##Get Appearances by individual
+library(dplyr)
+cores50_last_presence_inds=cores50_last_samples_presence_inds %>% group_by(individual) %>% summarise_all("sum") %>% as.data.frame()
+row.names(cores50_last_presence_inds) <- cores50_last_presence_inds$individual
+cores50_last_presence_inds=subset(cores50_last_presence_inds,select = -c(individual))
+cores50_last_samples_presence_inds_t=t(cores50_last_presence_inds)
+```
+
+```{r}
+#Get phylum and domain annotations
+##Domain
+dom_info=as.vector(tax_table(pseq_last_cores50)[,"domain"])
+leyend_uniq_tax_dom=na.exclude(unique(dom_info))
+dom_colors=colorRampPalette(brewer.pal(9, name="Set3"))(length(leyend_uniq_tax_dom))
+names(dom_colors)=leyend_uniq_tax_dom
+##Phylum
+phy_info=as.vector(tax_table(pseq_last_cores50)[,"phylum"])
+leyend_uniq_tax_phy=na.exclude(unique(phy_info))
+phy_colors=colorRampPalette(brewer.pal(12, name="Paired"))(length(leyend_uniq_tax_phy))
+names(phy_colors)=leyend_uniq_tax_phy
+##Include annotations
+lateral_info <-ComplexHeatmap::rowAnnotation(Domain=dom_info,Phylum=phy_info,gp = grid::gpar(col ="black"),
+                                             col=list(Domain=dom_colors,Phylum=phy_colors))
+#Get top annotations
+table(group_column)
+total_tp_info=as.character(as.vector(table(group_column)))
+total_tp_cols=c("7"="#c087c1","8"="#6a3d9a","4"="#ff7f00","2"="#ffff99")
+
+top_info <- ComplexHeatmap::HeatmapAnnotation(`Total Time Points`=total_tp_info,gp = grid::gpar(col ="black"),
+                                              col=list(`Total Time Points`=total_tp_cols))
+#Color Function for Heatmap
+#Mas abundance value=0.2821813
+#max(cores50_last_prop_avg_abund_inds_t)
+col4=circlize::colorRamp2(c(0,1,2,3,4,5,6,7,8), c(rev(RColorBrewer::brewer.pal(n = 9, name = "Spectral"))))
+
+##Set custom order columns IAE
+#cols_order=c(paste("I",sprintf('%0.2d', 1:10),sep =""),paste("A",sprintf('%0.2d', 1:10),sep =""),paste("E",sprintf('%0.2d', 1:10),sep =""))
+cols_split=c(replicate(10,"Adult"),replicate(10,"Elder"),replicate(10,"Infant"))
+
+
+##Get initial heatmap
+htA2<-ComplexHeatmap::Heatmap(cores50_last_samples_presence_inds_t, heatmap_legend_param=list(title="Times\nDetected",at=c(0,1,2,3,4,5,6,7,8)),
+                              show_column_names = TRUE,  
+                              column_split=factor(cols_split, levels = c("Infant","Adult","Elder")),
+                              cluster_column_slices = FALSE,
+                              #column_order = cols_order,
+                              column_title_side = "bottom", 
+                              row_names_max_width = unit(10, "cm"),border_gp = grid::gpar(col = "black", lty = 1),
+                              col = col4, top_annotation=top_info,
+                              rect_gp = grid::gpar(col = "black", lwd = 2),right_annotation = lateral_info)
+##Convert to ggplot
+gb_htA2= grid.grabExpr(draw(htA2,merge_legend = TRUE))
+gg_htA2=ggpubr::as_ggplot(gb_htA2)
+```
+
+```{r,fig.width=12,fig.height=18}
+#Show final figure
+gg_htA2
+```
+
+##Get Prevalence table for all core taxa
+
+```{r}
+#Save presence-absence table 
+tax_info=tax_table(pseq_last)[,c("domain","phylum","class","order","family","genus","last")]
+pre_table_tax=merge(tax_info,prevalences_table_core_taxa,by.y=0,by.x="last")
+write.table(pre_table_tax,file="./results/prevalence-table_coretaxa_IAE_lastTaxon.tsv",row.names = F,sep = "\t")
+```
+
+## Get Presence-Absence table by presence in each time-points
+
+```{r}
+ABUND=0.0001
+#Get presence by sample
+prev_table=ifelse(otu_table(pseq_last_cores50)>=ABUND,1,0)
+tax_info=tax_table(pseq_last)[,c("domain","phylum","class","order","family","genus","last")]
+pre_table_tax2=merge(tax_info,prev_table,by=0)
+pre_table_tax2=subset(pre_table_tax2, select=-c(Row.names))
+write.table(pre_table_tax2,file="./results/prevalence-absencetable_coretaxa_IAE_lastTaxon_by_sample.tsv",row.names = F,sep = "\t")
+```
+
+## Core Taxa Abundance Heatmaps
+
+A) Abundance Heatmap Core taxa 50% by groups:
+```{r}
+#Get inputs
+##Get Proportions for core taxa
+cores50_last_prop=data.frame(otu_table(pseq_last_cores50),check.names = F)
+##Get taxa for top taxa
+cores50_last_tax=data.frame(tax_table(pseq_last_cores50))
+##Change taxa names to full taxonomy
+row.names(cores50_last_prop)=cores50_last_tax$last
+##Get t matrix
+t_cores50_last_prop=t(cores50_last_prop)
+##Add group column
+group_column=data.frame(sample_data(pseq_last_cores50)[,"host_age_group"])
+t_cores50_last_prop_groups=cbind(t_cores50_last_prop,group_column)
+
+##Get Avg abundances by groups
+library(dplyr)
+cores50_last_prop_avg_abund_group=t_cores50_last_prop_groups %>% group_by(host_age_group) %>% summarise_all("mean") %>% as.data.frame()
+row.names(cores50_last_prop_avg_abund_group) <- cores50_last_prop_avg_abund_group$host_age_group
+cores50_last_prop_avg_abund_group=subset(cores50_last_prop_avg_abund_group,select = -c(host_age_group))
+cores50_last_prop_avg_abund_group_t=t(cores50_last_prop_avg_abund_group)
+```
+
+```{r}
+#Get phylum and domain anotations
+##Domain
+dom_info=as.vector(tax_table(pseq_last_cores50)[,"domain"])
+leyend_uniq_tax_dom=na.exclude(unique(dom_info))
+dom_colors=colorRampPalette(brewer.pal(9, name="Set3"))(length(leyend_uniq_tax_dom))
+names(dom_colors)=leyend_uniq_tax_dom
+##Phylum
+phy_info=as.vector(tax_table(pseq_last_cores50)[,"phylum"])
+leyend_uniq_tax_phy=na.exclude(unique(phy_info))
+phy_colors=colorRampPalette(brewer.pal(12, name="Paired"))(length(leyend_uniq_tax_phy))
+names(phy_colors)=leyend_uniq_tax_phy
+##Include annotations
+lateral_info <-ComplexHeatmap::rowAnnotation(Domain=dom_info,Phylum=phy_info,gp = grid::gpar(col ="black"),
+                                             col=list(Domain=dom_colors,Phylum=phy_colors))
+
+#Color Function for Heatmap
+#Mas abundance value=0.1510726
+#max(cores50_last_prop_avg_abund_group_t)
+col3=circlize::colorRamp2(c(0,0.0001,0.001,0.005,0.01,0.05,0.1,0.2,0.4,0.8,1), c(rev(RColorBrewer::brewer.pal(n = 11, name = "RdYlBu"))))
+col3=circlize::colorRamp2(c(0,0.0001,0.001,0.005,0.01,0.05,0.1,0.2), c(rev(RColorBrewer::brewer.pal(n = 8, name = "RdYlBu"))))
+col3=circlize::colorRamp2(c(0,0.0001,0.001,0.005,0.01,0.05,0.1,0.2,0.3), c(rev(RColorBrewer::brewer.pal(n = 9, name = "RdYlBu"))))
+
+
+##Get initial heatmap
+htB1<-ComplexHeatmap::Heatmap(cores50_last_prop_avg_abund_group_t, heatmap_legend_param=list(title="Average\nRelative Abundance",at=c(0,0.01,0.05,0.1,0.2,0.3)),
+                              show_column_names = TRUE, column_order = colnames(cores50_last_prop_avg_abund_group_t),
+                              column_names_rot = 45,column_title_side = "bottom", 
+                              row_names_max_width = unit(10, "cm"),border_gp = grid::gpar(col = "black", lty = 1),
+                              col = col3,rect_gp = grid::gpar(col = "black", lwd = 2),right_annotation = lateral_info)
+##Convert to ggplot
+gb_htB1= grid.grabExpr(draw(htB1))
+gg_htB1=ggpubr::as_ggplot(gb_htB1)
+```
+
+```{r,fig.width=10,fig.height=18}
+#Show final figure
+gg_htB1
+```
+
+```{r}
+ggsave(gg_htB1,filename = "./results/Heatmaps/Cores50perc_Abundance_Heatmap_bygroups_IAE_lastTaxon.svg",height = 18,width =10)
+```
+
+B) Abundance Heatmap Core taxa 50% by individuals:
+```{r}
+#Get inputs
+##Get Proportions for core taxa
+cores50_last_prop=data.frame(otu_table(pseq_last_cores50),check.names = F)
+##Get taxa for top taxa
+cores50_last_tax=data.frame(tax_table(pseq_last_cores50))
+##Change taxa names to full taxonomy
+row.names(cores50_last_prop)=cores50_last_tax$last
+##Get t matrix
+t_cores50_last_prop=t(cores50_last_prop)
+##Add group column
+group_column=data.frame(sample_data(pseq_last_cores50)[,"individual"])
+t_cores50_last_prop_inds=cbind(t_cores50_last_prop,group_column)
+
+##Get Avg abundances by groups
+library(dplyr)
+cores50_last_prop_avg_abund_inds=t_cores50_last_prop_inds %>% group_by(individual) %>% summarise_all("mean") %>% as.data.frame()
+row.names(cores50_last_prop_avg_abund_inds) <- cores50_last_prop_avg_abund_inds$individual
+cores50_last_prop_avg_abund_inds=subset(cores50_last_prop_avg_abund_inds,select = -c(individual))
+cores50_last_prop_avg_abund_inds_t=t(cores50_last_prop_avg_abund_inds)
+```
+
+```{r}
+#Get phylum and domain annotations
+##Domain
+dom_info=as.vector(tax_table(pseq_last_cores50)[,"domain"])
+leyend_uniq_tax_dom=na.exclude(unique(dom_info))
+dom_colors=colorRampPalette(brewer.pal(9, name="Set3"))(length(leyend_uniq_tax_dom))
+names(dom_colors)=leyend_uniq_tax_dom
+##Phylum
+phy_info=as.vector(tax_table(pseq_last_cores50)[,"phylum"])
+leyend_uniq_tax_phy=na.exclude(unique(phy_info))
+phy_colors=colorRampPalette(brewer.pal(12, name="Paired"))(length(leyend_uniq_tax_phy))
+names(phy_colors)=leyend_uniq_tax_phy
+##Include annotations
+lateral_info <-ComplexHeatmap::rowAnnotation(Domain=dom_info,Phylum=phy_info,gp = grid::gpar(col ="black"),
+                                             col=list(Domain=dom_colors,Phylum=phy_colors))
+
+#Color Function for Heatmap
+#Mas abundance value=0.2821813
+#max(cores50_last_prop_avg_abund_inds_t)
+col3=circlize::colorRamp2(c(0,0.0001,0.001,0.005,0.01,0.05,0.1,0.2,0.4,0.8,1), c(rev(RColorBrewer::brewer.pal(n = 11, name = "RdYlBu"))))
+col3=circlize::colorRamp2(c(0,0.0001,0.001,0.005,0.01,0.05,0.1,0.2,0.3), c(rev(RColorBrewer::brewer.pal(n = 9, name = "RdYlBu"))))
+
+##Set custom order columns IAE
+#cols_order=c(paste("I",sprintf('%0.2d', 1:10),sep =""),paste("A",sprintf('%0.2d', 1:10),sep =""),paste("E",sprintf('%0.2d', 1:10),sep =""))
+cols_split=c(replicate(10,"Adult"),replicate(10,"Elder"),replicate(10,"Infant"))
+
+
+##Get initial heatmap
+htC1<-ComplexHeatmap::Heatmap(cores50_last_prop_avg_abund_inds_t, heatmap_legend_param=list(title="Average\nRelative Abundance",at=c(0,0.01,0.05,0.1,0.2,0.3)),
+                              show_column_names = TRUE,  
+                              column_split=factor(cols_split, levels = c("Infant","Adult","Elder")),
+                              cluster_column_slices = FALSE,
+                              #column_order = cols_order,
+                              column_title_side = "bottom", 
+                              row_names_max_width = unit(10, "cm"),border_gp = grid::gpar(col = "black", lty = 1),
+                              col = col3,rect_gp = grid::gpar(col = "black", lwd = 2),right_annotation = lateral_info)
+##Convert to ggplot
+gb_htC1= grid.grabExpr(draw(htC1))
+gg_htC1=ggpubr::as_ggplot(gb_htC1)
+```
+
+```{r,fig.width=12,fig.height=18}
+#Show final figure
+gg_htC1
+```
+
+```{r}
+ggsave(gg_htC1,filename = "./results/Heatmaps/Cores50perc_Abundance_Heatmap_byindividuals_IAE_lastTaxon.svg",height = 18,width =12)
+```
+
+
+### Combine 4 plots (Supplementary Figure 4)
+```{r,fig.width=40,fig.height=18}
+sfig4<-cowplot::plot_grid(gg_htB1,gg_htC1,gg_htA1,gg_htA2, labels = c("A)","B)","C)","D)"),rel_widths = c(0.9,1.1,0.9,1.1),ncol = 4)
+sfig4
+```
+
+```{r}
+ggsave(sfig4,filename = "./results/Heatmaps/Supplementary_Figure4.pdf",height = 18,width =40)
+```
+
+
+## Jaccard Core Index (Figure5)
+
+```{r}
+#Get full proportions object
+pseq_last_prop=microbiome::transform(pseq_last,"compositional")
+
+jaccard_core_index = function(pseq_object, reference, abundance_threshold){
+  #Init results object
+  Sample_Name = c()
+  JCI = c()
+  
+  #Get abundance table
+  ##Get Proportions for core taxa
+  last_prop = data.frame(otu_table(pseq_object),check.names = F)
+  ##Get taxa for top taxa
+  last_tax = data.frame(tax_table(pseq_object))
+  ##Change taxa names to full taxonomy
+  row.names(last_prop) = last_tax$last
+  
+  #Get presence by sample
+  last_samples_presence = data.frame(ifelse(last_prop>=abundance_threshold,1,0),check.names = F)
+  
+  #For each sample get
+  for (sample in 1:length(last_samples_presence)) {
+    #Get temp list of taxa present in sample
+    temp_sample_list = rownames(last_samples_presence)[last_samples_presence[sample] == 1]
+    #Get temp intersecc
+    temp_intersect = intersect(reference, temp_sample_list)
+    #Get temp Jaccard core index
+    temp_jci = length(temp_intersect) / (length(reference)+length(temp_sample_list)-length(temp_intersect))
+    #Save results
+    #Save results
+    Sample_Name = c(Sample_Name,colnames(last_samples_presence)[sample])
+    JCI = c(JCI, temp_jci)
+  }
+  
+  #Combine results
+  var.res = data.frame(Sample_Name,JCI)
+  return(var.res)
+}
+
+#Get JCIs
+abundance_threshold = 1e-04
+
+JCI_I50 = jaccard_core_index(pseq_last_prop, pa_table_tax[pa_table_tax$`Infants 50%`==1, "last"], abundance_threshold)
+colnames(JCI_I50)[2]="JCI_I50"
+JCI_I80 = jaccard_core_index(pseq_last_prop, pa_table_tax[pa_table_tax$`Infants 80%`==1, "last"], abundance_threshold)
+colnames(JCI_I80)[2]="JCI_I80"
+JCI_A50 = jaccard_core_index(pseq_last_prop, pa_table_tax[pa_table_tax$`Adults 50%`==1, "last"], abundance_threshold)
+colnames(JCI_A50)[2]="JCI_A50"
+JCI_A80 = jaccard_core_index(pseq_last_prop, pa_table_tax[pa_table_tax$`Adults 80%`==1, "last"], abundance_threshold)
+colnames(JCI_A80)[2]="JCI_A80"
+JCI_E50 = jaccard_core_index(pseq_last_prop, pa_table_tax[pa_table_tax$`Elders 50%`==1, "last"], abundance_threshold)
+colnames(JCI_E50)[2]="JCI_E50"
+JCI_E80 = jaccard_core_index(pseq_last_prop, pa_table_tax[pa_table_tax$`Elders 80%`==1, "last"], abundance_threshold)
+colnames(JCI_E80)[2]="JCI_E80"
+
+#Merge Results
+jci_results = Reduce(function(x,y) merge(x,y, all=TRUE), list(JCI_I50, JCI_I80, JCI_A50, JCI_A80, JCI_E50, JCI_E80))
+
+#Merge with metadata
+jci_results_meta = merge(jci_results, metadata[,c("sample","age_days","age_years","host_age_group")], by.x="Sample_Name", by.y=0)
+
+#Construct Labels Column
+labels_age = c()
+
+for (i in jci_results_meta$host_age_group) {
+  if (i == "Elder") {
+    labels_age = c(labels_age, "E")
+  } else if (i == "Adult") {
+    labels_age = c(labels_age, "A")
+  } else{
+    labels_age = c(labels_age, "I")
+  }
+}
+
+jci_results_meta$age_group <- labels_age
+```
+
+```{r}
+#COndiciones de aplicabilidad
+
+#Normalidad
+library(tidyverse)
+jci_results_meta %>% group_by(age_group) %>% summarise(media=mean(JCI_I50), sd=sd(JCI_I50),norm=shapiro.test(JCI_I50)$p.value) #Normalidad para los 3 grupos p.value > 0.05
+jci_results_meta %>% group_by(age_group) %>% summarise(media=mean(JCI_A50), sd=sd(JCI_A50),norm=shapiro.test(JCI_A50)$p.value) #Solo grupo E es Normal
+jci_results_meta %>% group_by(age_group) %>% summarise(media=mean(JCI_E50), sd=sd(JCI_E50),norm=shapiro.test(JCI_E50)$p.value) #Ningún grupo es Normal
+#Varianza
+library(car)
+leveneTest(jci_results_meta$JCI_I50 ~ jci_results_meta$age_group) #p.value > 0.05, Varianzas no iguales
+leveneTest(jci_results_meta$JCI_A50 ~ jci_results_meta$age_group) #p.value > 0.05, Varianzas no iguales
+leveneTest(jci_results_meta$JCI_E50 ~ jci_results_meta$age_group) #p.value > 0.05, Varianzas no iguales
+
+# Test a utilizar Mann-Withney test / wilcox.test(x, y, paired = FALSE, var.equal = FALSE)
+pairwise.wilcox.test(x=jci_results_meta$JCI_I50, g=jci_results_meta$age_group,paired = FALSE, p.adjust.method="none")
+pairwise.wilcox.test(x=jci_results_meta$JCI_A50, g=jci_results_meta$age_group,paired = FALSE, p.adjust.method="none")
+pairwise.wilcox.test(x=jci_results_meta$JCI_E50, g=jci_results_meta$age_group,paired = FALSE, p.adjust.method="none")
+```
+
+```{r}
+jci_results_meta$age_group <- factor(jci_results_meta$age_group , levels=c("I","A", "E"))
+
+get_geom_point_JCI_plot = function(jci_results_meta,title_text,y_value){
+  pplot = ggplot(data = jci_results_meta,aes_string(x="age_years",y=y_value))+ geom_point(aes_string(fill="age_group"),shape = 21,colour = "black",size=3)
+  pplot = pplot +scale_fill_manual(breaks = c("I", "A", "E"),values=c("#28d528", "#ff0808", "#4141ff"))
+  pplot = pplot + theme_bw()+ylim(0.3,0.9)+theme(axis.text.y = element_text(colour = 'black', size = 10),axis.text.x = element_text(colour = 'black', size = 10))
+  pplot = pplot + labs(y='Jaccard Core Index', x='Age (years)', title = title_text) 
+  pplot = pplot + theme(legend.position = "none")
+  return(pplot) 
+}
+
+get_boxplot_JCI = function(jci_results_meta,y_value){
+  my_comparisons <- list( c("I", "A"), c("A", "E"), c("I", "E") )
+  bplot = ggplot(data = jci_results_meta,aes_string(x="age_group",y=y_value))+ geom_boxplot(aes(fill=age_group))
+  bplot = bplot +scale_fill_manual(breaks = c("I", "A", "E"),values=c("#28d528", "#ff0808", "#4141ff"))
+  bplot = bplot + theme_bw()+ylim(0.3,1)+theme(axis.text.y = element_text(colour = 'black', size = 10),axis.text.x = element_text(colour = 'black', size = 10))
+  bplot = bplot + labs(y='Jaccard Core Index', x='', title = 'Pairwise Wilcoxon rank sum test') 
+  bplot = bplot + theme(legend.position = "none")
+  bplot = bplot + stat_summary(fun=mean, geom="point", shape=25, size=4, color="black", fill="yellow")
+  bplot = bplot + ggpubr::stat_compare_means(comparisons = my_comparisons, label.y =c(0.85,0.88,0.92),
+                                             method ='wilcox.test', paired = FALSE, var.equal = FALSE,  p.adjust.method="none")
+}
+
+# 80% -> ylim(0.2,0.6)
+# max(jci_results_meta[,c("JCI_I80","JCI_A80","JCI_E80")])
+```
+
+```{r}
+pplotI50 = get_geom_point_JCI_plot(jci_results_meta, 'Reference: 50% Infant Core', "JCI_I50")
+bplotI50 = get_boxplot_JCI(jci_results_meta, "JCI_I50")
+pplotA50 = get_geom_point_JCI_plot(jci_results_meta, 'Reference: 50% Adult Core', "JCI_A50")
+bplotA50 = get_boxplot_JCI(jci_results_meta, "JCI_A50")
+pplotE50 = get_geom_point_JCI_plot(jci_results_meta, 'Reference: 50% Elder Core', "JCI_E50")
+bplotE50 = get_boxplot_JCI(jci_results_meta, "JCI_E50")
+
+final_plot_fig5 <- cowplot::plot_grid(pplotI50, pplotA50, pplotE50, bplotI50, bplotA50, bplotE50, labels = c("A)","B)","C)","","",""), ncol=3, nrow=2)
+```
+
+```{r}
+#Save plot
+ggsave(plot=final_plot_fig5,filename = "./results/Fig5_Jaccard_Core_Index_IAE_lastTaxon_years.svg",height = 10, width = 15,scale = 1,bg ="white" )
+ggsave(plot=final_plot_fig5,filename = "./results/Fig5_Jaccard_Core_Index_IAE_lastTaxon_years.pdf",height = 10, width = 15,scale = 1)
+```

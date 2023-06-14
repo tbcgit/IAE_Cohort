@@ -1,0 +1,31 @@
+individual	sub-region	country	continent	host_age	host_age_group	host_sex	host_lifestyle	host_diet	host_body_mass_index	host_bmi_group
+I01	Valencia Region	Spain	Europe	5	Infant	Male	Urban	Mediterranean	15.9	Normal Weight
+I02	Valencia Region	Spain	Europe	2	Infant	Female	Urban	Mediterranean	16.05	Normal Weight
+I03	Valencia Region	Spain	Europe	5	Infant	Female	Urban	Mediterranean	15.26	Normal Weight
+I04	Valencia Region	Spain	Europe	2	Infant	Male	Urban	Mediterranean	15.56	Normal Weight
+I05	Valencia Region	Spain	Europe	3	Infant	Male	Urban	Mediterranean	13.94	Underweight
+I06	Valencia Region	Spain	Europe	5	Infant	Male	Urban	Mediterranean	19.95	Obese
+I07	Valencia Region	Spain	Europe	5	Infant	Male	Urban	Mediterranean	15.7	Normal Weight
+I08	Valencia Region	Spain	Europe	5	Infant	Female	Urban	Mediterranean	15.38	Normal Weight
+I09	Valencia Region	Spain	Europe	2	Infant	Female	Urban	Mediterranean	15.41	Normal Weight
+I10	Valencia Region	Spain	Europe	5	Infant	Female	Urban	Mediterranean	15.77	Normal Weight
+A01	Valencia Region	Spain	Europe	27	Adult	Female	Urban	Mediterranean	20.91	Normal Weight
+A02	Valencia Region	Spain	Europe	31	Adult	Female	Urban	Mediterranean	22.77	Normal Weight
+A03	Valencia Region	Spain	Europe	35	Adult	Male	Urban	Mediterranean	21.5	Normal Weight
+A04	Valencia Region	Spain	Europe	27	Adult	Male	Urban	Mediterranean	23.03	Normal Weight
+A05	Valencia Region	Spain	Europe	33	Adult	Female	Urban	Mediterranean	24.05	Normal Weight
+A06	Valencia Region	Spain	Europe	43	Adult	Male	Urban	Mediterranean	23.88	Normal Weight
+A07	Valencia Region	Spain	Europe	44	Adult	Male	Urban	Mediterranean	24.06	Normal Weight
+A08	Valencia Region	Spain	Europe	32	Adult	Female	Urban	Mediterranean	21.36	Normal Weight
+A09	Valencia Region	Spain	Europe	38	Adult	Female	Urban	Mediterranean	20.76	Normal Weight
+A10	Valencia Region	Spain	Europe	44	Adult	Male	Urban	Mediterranean	26.25	Overweight
+E01	Valencia Region	Spain	Europe	76	Elder	Female	Urban	Mediterranean	26.91	Overweight
+E02	Valencia Region	Spain	Europe	71	Elder	Female	Urban	Mediterranean	20.15	Normal Weight
+E03	Valencia Region	Spain	Europe	78	Elder	Male	Urban	Mediterranean	27.83	Overweight
+E04	Valencia Region	Spain	Europe	69	Elder	Female	Urban	Mediterranean	30.54	Obese
+E05	Valencia Region	Spain	Europe	77	Elder	Male	Urban	Mediterranean	23.88	Normal Weight
+E06	Valencia Region	Spain	Europe	73	Elder	Female	Urban	Mediterranean	25.51	Overweight
+E07	Valencia Region	Spain	Europe	77	Elder	Male	Urban	Mediterranean	27.67	Overweight
+E08	Valencia Region	Spain	Europe	76	Elder	Female	Urban	Mediterranean	27.64	Overweight
+E09	Valencia Region	Spain	Europe	81	Elder	Female	Urban	Mediterranean	27.12	Overweight
+E10	Valencia Region	Spain	Europe	69	Elder	Female	Urban	Mediterranean	25.53	Overweight
